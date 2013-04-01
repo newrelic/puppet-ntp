@@ -13,7 +13,7 @@
 #       ],
 #
 #   [*ensure*]
-#     Ensure if package is present or absent.
+#     Ensure if present or absent.
 #     Default: present
 #
 #   [*autoupgrade*]
@@ -29,6 +29,27 @@
 #     Main configuration file.
 #     Only set this, if your platform is not supported or you know, what you're doing.
 #     Default: auto-set, platform specific
+#
+#   [*service_ensure*]
+#     Ensure if service is running or stopped
+#     Default: running
+#
+#   [*service_name*]
+#     Name of NTP service
+#     Only set this, if your platform is not supported or you know, what you're doing.
+#     Default: auto-set, platform specific
+#
+#   [*service_enable*]
+#     Start service at boot
+#     Default: true
+#
+#   [*service_hasstatus*]
+#     Service has status command
+#     Default: true
+#
+#   [*service_hasrestart*]
+#     Service has restart command
+#     Default: true
 #
 #   [*defaults_file*]
 #     Init script configuration file.
@@ -66,6 +87,11 @@ class ntp::ntpdate(
   $autoupgrade = false,
   $package = $ntp::params::ntpdate_package,
   $config_file = $ntp::params::ntpdate_config_file,
+  $service_ensure = 'running',
+  $service_name = $ntp::params::ntpdate_service_name,
+  $service_enable = true,
+  $service_hasstatus = false,
+  $service_hasrestart = true,
   $defaults_file = $ntp::params::ntpdate_defaults_file,
   $ntpdate_options = '-U ntp -s -b',
   $sync_hwclock = false
@@ -78,10 +104,19 @@ class ntp::ntpdate(
       } else {
         $package_ensure = 'present'
       }
+
+      if $service_ensure == 'running' {
+        $service_ensure_real = $service_ensure
+      } elsif $service_ensure == 'stopped' {
+        $service_ensure_real = $service_ensure
+      } else {
+        fail('service_ensure parameter must be running or stopped')
+      }
     }
 
     /(absent)/: {
       $package_ensure = 'absent'
+      $service_ensure_real = 'stopped'
     }
     default: {
       fail('ensure parameter must be present or absent')
@@ -112,4 +147,11 @@ class ntp::ntpdate(
     notify  => Service[$service_name],
   }
 
+  service { $service_name:
+    ensure     => $service_ensure_real,
+    enable     => $service_enable,
+    hasstatus  => $service_hasstatus,
+    hasrestart => $service_hasrestart,
+    status     => '/bin/true',
+  }
 }
