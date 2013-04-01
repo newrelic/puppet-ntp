@@ -23,6 +23,11 @@ class ntp::params {
       $defaults_file = '/etc/sysconfig/ntpd'
       $defaults_file_tpl = 'ntp.defaults.redhat.erb'
       $ntpd_start_options = '-u ntp:ntp -p /var/run/ntpd.pid -g'
+
+      $ntpdate_package = 'ntpdate'
+      $ntpdate_config_file = '/etc/ntp/step-tickers'
+      $ntpdate_defaults_file = '/etc/sysconfig/ntpdate'
+      $ntpdate_service_name = 'ntpddate'
     }
     'Suse': {
       $service_name = 'ntp'
